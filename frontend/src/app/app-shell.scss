@@ -1,0 +1,225 @@
+:host {
+  display: block;
+  min-height: 100vh;
+}
+
+.workspace {
+  display: grid;
+  grid-template-columns: 236px minmax(0, 1fr);
+  min-height: 100vh;
+}
+
+.sidebar {
+  position: sticky;
+  top: 0;
+  display: flex;
+  height: 100vh;
+  flex-direction: column;
+  padding: 24px 16px 18px;
+  border-right: 1px solid #dce4e5;
+  background: #fbfcfc;
+}
+
+.brand {
+  display: flex;
+  min-height: 50px;
+  align-items: center;
+  gap: 11px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.brand-mark {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border-radius: 9px;
+  background: #123b3a;
+  color: #e7faf6;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.brand-copy,
+.brand-copy small {
+  display: block;
+}
+
+.brand-copy strong {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.brand-copy small {
+  margin-top: 3px;
+  color: #738189;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.nav-caption {
+  margin: 42px 10px 10px;
+  color: #79878e;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+}
+
+.nav-link {
+  width: 100%;
+  justify-content: flex-start;
+  gap: 10px;
+  border-radius: 5px;
+  color: #53636a;
+  font-size: 13px;
+}
+
+.nav-link.is-active {
+  background: #e5f1ef;
+  color: #145c55;
+  font-weight: 700;
+}
+
+.nav-link mat-icon {
+  width: 19px;
+  height: 19px;
+  font-size: 19px;
+}
+
+.sidebar-note {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: auto 8px 0;
+  padding-top: 15px;
+  border-top: 1px solid #e5ebec;
+  color: #718087;
+  font-size: 11px;
+}
+
+.note-indicator {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #df9d3b;
+}
+
+.main-column {
+  min-width: 0;
+}
+
+.topbar {
+  position: sticky;
+  z-index: 2;
+  top: 0;
+  display: flex;
+  height: 62px;
+  padding: 0 30px;
+  border-bottom: 1px solid #dce4e5;
+  background: rgb(255 255 255 / 96%);
+  color: #34434a;
+  font-family: inherit;
+  font-size: 12px;
+}
+
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #78868d;
+}
+
+.breadcrumb strong {
+  color: #34434a;
+  font-weight: 600;
+}
+
+.toolbar-spacer {
+  flex: 1;
+}
+
+.connection-state {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #64747a;
+  font-size: 11px;
+}
+
+.connection-dot {
+  width: 8px;
+  height: 8px;
+  border: 1px solid #c18b3c;
+  border-radius: 50%;
+  background: #f0c878;
+}
+
+.user-label {
+  margin-left: 24px;
+  padding-left: 20px;
+  border-left: 1px solid #dfe6e7;
+  color: #526168;
+  font-size: 11px;
+}
+
+.page-content {
+  width: min(1440px, 100%);
+  margin: 0 auto;
+  padding: 34px 36px 48px;
+}
+
+@media (max-width: 760px) {
+  .workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    position: static;
+    height: auto;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    border-right: 0;
+    border-bottom: 1px solid #dce4e5;
+  }
+
+  .nav-caption,
+  .sidebar-note {
+    display: none;
+  }
+
+  .nav-link {
+    width: auto;
+  }
+
+  .topbar {
+    height: 54px;
+    padding: 0 16px;
+  }
+
+  .user-label {
+    display: none;
+  }
+
+  .page-content {
+    padding: 26px 16px 36px;
+  }
+}
+
+@media (max-width: 440px) {
+  .brand-copy small,
+  .breadcrumb,
+  .connection-state span:last-child {
+    display: none;
+  }
+
+  .topbar::before {
+    content: 'Fleet Pulse';
+    font-size: 13px;
+    font-weight: 700;
+  }
+}

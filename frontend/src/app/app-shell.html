@@ -1,0 +1,46 @@
+<div class="workspace">
+  <aside class="sidebar" aria-label="Primary navigation">
+    <a class="brand" routerLink="/" aria-label="Fleet Pulse home">
+      <span class="brand-mark" aria-hidden="true">FP</span>
+      <span class="brand-copy">
+        <strong>Fleet Pulse</strong>
+        <small>OPERATIONS CENTER</small>
+      </span>
+    </a>
+
+    <p class="nav-caption">WORKSPACE</p>
+    <a
+      mat-button
+      class="nav-link"
+      routerLink="/"
+      routerLinkActive="is-active"
+      [routerLinkActiveOptions]="{ exact: true }"
+    >
+      <mat-icon aria-hidden="true">space_dashboard</mat-icon>
+      <span>Fleet overview</span>
+    </a>
+
+    <div class="sidebar-note">
+      <span class="note-indicator" aria-hidden="true"></span>
+      <span>Foundation phase</span>
+    </div>
+  </aside>
+
+  <div class="main-column">
+    <mat-toolbar class="topbar">
+      <div class="breadcrumb">
+        <span>Operations</span><span aria-hidden="true">/</span><strong>Fleet</strong>
+      </div>
+      <span class="toolbar-spacer"></span>
+      <div class="connection-state" role="status" aria-live="polite">
+        <span class="connection-dot" aria-hidden="true"></span>
+        <span>Health check not connected</span>
+      </div>
+      <span class="user-label">Local workspace</span>
+    </mat-toolbar>
+
+    <main class="page-content">
+      <router-outlet />
+    </main>
+  </div>
+</div>
