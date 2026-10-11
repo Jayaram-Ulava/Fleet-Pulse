@@ -108,6 +108,7 @@
 }
 
 .main-column {
+  position: relative;
   min-width: 0;
 }
 
@@ -157,12 +158,119 @@
   background: #f0c878;
 }
 
+.connection-dot.live-websocket,
+.connection-dot.live-sse {
+  border-color: #287251;
+  background: #55a978;
+}
+
+.connection-dot.polling {
+  border-color: #a16a18;
+  background: #edbd61;
+}
+
+.connection-dot.offline {
+  border-color: #a33e39;
+  background: #d66a62;
+}
+
+.connection-dot.stale {
+  border-color: #a16a18;
+  background: #edbd61;
+}
+
+.connection-state small {
+  color: #8a979c;
+}
+
 .user-label {
   margin-left: 24px;
   padding-left: 20px;
   border-left: 1px solid #dfe6e7;
   color: #526168;
   font-size: 11px;
+}
+
+.sign-out-button,
+.sign-in-link {
+  min-width: auto;
+  margin-left: 10px;
+  color: #145d56;
+  font-size: 11px;
+}
+
+.incident-button {
+  min-width: 36px;
+  margin-right: 10px;
+  color: #5e6e73;
+}
+
+.incident-button mat-icon {
+  width: 18px;
+  height: 18px;
+  font-size: 18px;
+}
+
+.incident-button span {
+  min-width: 15px;
+  color: #a33e39;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.incident-panel {
+  position: absolute;
+  z-index: 4;
+  top: 70px;
+  right: 20px;
+  width: min(370px, calc(100vw - 32px));
+  max-height: min(70vh, 520px);
+  overflow: auto;
+  border: 1px solid #d7e0e0;
+  border-radius: 5px;
+  background: #fff;
+  box-shadow: 0 8px 24px rgb(29 48 54 / 14%);
+}
+
+.incident-panel > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-bottom: 1px solid #e4eaea;
+}
+
+.incident-panel h2 {
+  margin: 0;
+  font-size: 12px;
+}
+
+.incident-empty {
+  padding: 4px 12px;
+  color: #77858a;
+  font-size: 11px;
+}
+
+.incident-item {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px;
+  border-bottom: 1px solid #edf0f0;
+}
+
+.incident-item strong {
+  color: #343f44;
+  font-size: 11px;
+}
+
+.incident-item p,
+.incident-item time {
+  display: block;
+  margin: 5px 0 0;
+  color: #728087;
+  font-size: 10px;
 }
 
 .page-content {
@@ -203,6 +311,11 @@
 
   .user-label {
     display: none;
+  }
+
+  .sign-out-button,
+  .sign-in-link {
+    margin-left: 5px;
   }
 
   .page-content {

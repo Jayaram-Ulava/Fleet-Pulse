@@ -1,0 +1,147 @@
+:host {
+  display: block;
+}
+
+.service-detail {
+  min-width: 0;
+}
+
+.back-link {
+  display: inline-flex;
+  min-height: 32px;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 22px;
+  color: #46615f;
+  font-size: 11px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.back-link mat-icon {
+  width: 17px;
+  height: 17px;
+  font-size: 17px;
+}
+
+.service-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 23px;
+}
+
+.eyebrow {
+  margin: 0 0 9px;
+  color: #718087;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.eyebrow span {
+  padding: 0 4px;
+  color: #a5afb2;
+}
+
+h1 {
+  margin: 0;
+  color: #25333a;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.service-team {
+  margin: 7px 0 0;
+  color: #718087;
+  font-size: 11px;
+}
+
+.stream-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 9px;
+  border: 1px solid #cfe2d5;
+  border-radius: 4px;
+  background: #f4faf5;
+  color: #327250;
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.stream-badge span {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #55a978;
+}
+
+.charts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.detail-state,
+.detail-error {
+  display: flex;
+  min-height: 220px;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: #718087;
+  font-size: 12px;
+}
+
+.detail-error {
+  min-height: 100px;
+  border: 1px solid #e8c6c3;
+  border-radius: 5px;
+  background: #fff8f7;
+  color: #873d38;
+}
+
+.detail-error button {
+  min-height: 32px;
+  margin-left: 6px;
+  padding: 0 10px;
+  border: 1px solid #d7b8b5;
+  border-radius: 4px;
+  background: #fff;
+  color: #843a35;
+  cursor: pointer;
+  font: inherit;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.loading-indicator {
+  width: 14px;
+  height: 14px;
+  border: 2px solid #dce7e5;
+  border-top-color: #176d63;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 900px) {
+  .charts {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 540px) {
+  .service-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

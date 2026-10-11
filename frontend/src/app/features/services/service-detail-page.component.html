@@ -1,0 +1,39 @@
+<main class="service-detail" aria-labelledby="page-title">
+  <a class="back-link" routerLink="/">
+    <mat-icon aria-hidden="true">arrow_back</mat-icon>
+    <span>Fleet overview</span>
+  </a>
+
+  @if (isLoading()) {
+    <div class="detail-state" role="status">
+      <span class="loading-indicator" aria-hidden="true"></span>
+      <span>Loading service history…</span>
+    </div>
+  } @else if (loadError(); as message) {
+    <section class="detail-error" role="alert">
+      <mat-icon aria-hidden="true">error_outline</mat-icon>
+      <span>{{ message }}</span>
+      <button type="button" (click)="retryHistory()">Retry</button>
+    </section>
+  } @else if (service(); as currentService) {
+    <header class="service-header">
+      <div>
+        <p class="eyebrow">SERVICE DETAIL <span>/</span> {{ currentService.serviceId }}</p>
+        <h1 id="page-title">{{ currentService.name }}</h1>
+        <p class="service-team">{{ currentService.team }} team · Last 15 minutes</p>
+      </div>
+      <span class="stream-badge"><span aria-hidden="true"></span> Live updates</span>
+    </header>
+
+    <section class="charts" aria-label="Service metric charts">
+      <app-metric-chart title="p95 latency" metricKey="p95" unit="ms" [points]="chartPoints()" />
+      <app-metric-chart title="Error rate" metricKey="errRate" unit="%" [points]="chartPoints()" />
+      <app-metric-chart
+        title="Requests per second"
+        metricKey="rps"
+        unit=""
+        [points]="chartPoints()"
+      />
+    </section>
+  }
+</main>

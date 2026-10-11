@@ -1,0 +1,25 @@
+<section class="chart-panel" [attr.aria-label]="title() + ' chart'">
+  <div class="chart-heading">
+    <div>
+      <h2>{{ title() }}</h2>
+      <span>{{ points().length }} points · {{ unit() }}</span>
+    </div>
+  </div>
+
+  @if (renderError(); as message) {
+    <div class="chart-error" role="alert">
+      <span>{{ message }}</span>
+      <button type="button" (click)="retryRender()">Retry</button>
+    </div>
+  } @else if (points().length === 0) {
+    <div class="chart-empty" role="status">No metric history is available.</div>
+  } @else {
+    <div class="chart-canvas-wrap">
+      <canvas
+        #chartCanvas
+        role="img"
+        [attr.aria-label]="title() + ' over the last 15 minutes'"
+      ></canvas>
+    </div>
+  }
+</section>

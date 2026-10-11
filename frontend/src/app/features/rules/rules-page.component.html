@@ -1,0 +1,205 @@
+<main class="rules-page" aria-labelledby="page-title">
+  <header class="page-heading">
+    <div>
+      <p class="eyebrow">ALERTING <span>/</span> OPERATOR RULES</p>
+      <h1 id="page-title">Alert rules</h1>
+      <p class="subtitle">Define thresholds for service metrics and sustained conditions.</p>
+    </div>
+    @if (!isEditorOpen()) {
+      <button mat-flat-button color="primary" type="button" (click)="startCreate()">
+        <mat-icon aria-hidden="true">add</mat-icon>
+        <span>New rule</span>
+      </button>
+    }
+  </header>
+
+  @if (listError(); as message) {
+    <div class="error-banner" role="alert">
+      <span>{{ message }}</span>
+      <button type="button" (click)="loadRules()">Retry</button>
+    </div>
+  }
+
+  @if (isEditorOpen()) {
+    <section class="editor" aria-labelledby="editor-title">
+      <header class="editor-heading">
+        <div>
+          <h2 id="editor-title">{{ editingRuleId() ? 'Edit rule' : 'Create rule' }}</h2>
+          <p>Name the rule and define one or more metric conditions.</p>
+        </div>
+        <button
+          mat-icon-button
+          type="button"
+          aria-label="Close rule editor"
+          (click)="cancelEditor()"
+        >
+          <mat-icon>close</mat-icon>
+        </button>
+      </header>
+
+      <form [formGroup]="ruleForm" (ngSubmit)="saveRule()" novalidate>
+        <div class="name-field">
+          <mat-form-field appearance="outline">
+            <mat-label>Rule name</mat-label>
+            <input matInput formControlName="name" maxlength="80" autocomplete="off" />
+            @if (ruleForm.controls.name.touched && ruleForm.controls.name.hasError('required')) {
+              <mat-error>Enter a rule name.</mat-error>
+            } @else if (
+              ruleForm.controls.name.touched && ruleForm.controls.name.hasError('minlength')
+            ) {
+              <mat-error>Use at least 3 characters.</mat-error>
+            } @else if (ruleForm.controls.name.hasError('uniqueRuleName')) {
+              <mat-error>A rule with this name already exists.</mat-error>
+            } @else if (ruleForm.controls.name.hasError('ruleNameCheckFailed')) {
+              <mat-error>Name availability could not be checked.</mat-error>
+            }
+          </mat-form-field>
+          @if (ruleForm.controls.name.pending) {
+            <span class="checking-name" role="status">Checking name…</span>
+          }
+        </div>
+
+        <div class="condition-heading">
+          <div>
+            <h3>Conditions</h3>
+            @if (conditions.hasError('atLeastOneCondition')) {
+              <span class="field-error" role="alert">Add at least one condition.</span>
+            }
+            @if (conditions.hasError('duplicateCondition')) {
+              <span class="field-error" role="alert">Remove duplicate conditions.</span>
+            }
+          </div>
+          <button mat-stroked-button type="button" (click)="addCondition()">
+            <mat-icon aria-hidden="true">add</mat-icon>
+            <span>Add condition</span>
+          </button>
+        </div>
+
+        <div class="conditions" formArrayName="conditions">
+          @for (condition of conditions.controls; track condition; let index = $index) {
+            <div class="condition-row" [formGroupName]="index">
+              <mat-form-field appearance="outline">
+                <mat-label>Metric</mat-label>
+                <mat-select formControlName="metric">
+                  <mat-option value="p95">p95 latency</mat-option>
+                  <mat-option value="errRate">Error rate</mat-option>
+                  <mat-option value="rps">Requests per second</mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Operator</mat-label>
+                <mat-select formControlName="operator">
+                  <mat-option value=">">greater than</mat-option>
+                  <mat-option value=">=">at least</mat-option>
+                  <mat-option value="<">less than</mat-option>
+                  <mat-option value="<=">at most</mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Threshold</mat-label>
+                <input matInput type="number" formControlName="threshold" min="0" />
+                @if (fieldError(condition.get('threshold'), 'Threshold'); as message) {
+                  <mat-error>{{ message }}</mat-error>
+                }
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Duration (seconds)</mat-label>
+                <input
+                  matInput
+                  type="number"
+                  formControlName="durationSeconds"
+                  min="1"
+                  max="86400"
+                />
+                @if (fieldError(condition.get('durationSeconds'), 'Duration'); as message) {
+                  <mat-error>{{ message }}</mat-error>
+                }
+              </mat-form-field>
+
+              <button
+                mat-icon-button
+                type="button"
+                [attr.aria-label]="'Remove condition ' + (index + 1)"
+                [disabled]="conditions.length <= 1"
+                (click)="removeCondition(index)"
+              >
+                <mat-icon>delete_outline</mat-icon>
+              </button>
+
+              @if (condition.hasError('metricThresholdRange')) {
+                <p class="field-error condition-error" role="alert">
+                  {{ fieldError(condition, 'Threshold') }}
+                </p>
+              }
+            </div>
+          }
+        </div>
+
+        @if (saveError(); as message) {
+          <p class="save-error" role="alert">{{ message }}</p>
+        }
+
+        <footer class="form-actions">
+          <button mat-button type="button" (click)="cancelEditor()">Cancel</button>
+          <button
+            mat-flat-button
+            color="primary"
+            type="submit"
+            [disabled]="isSaving() || ruleForm.invalid || ruleForm.pending"
+          >
+            {{ isSaving() ? 'Saving…' : editingRuleId() ? 'Save changes' : 'Create rule' }}
+          </button>
+        </footer>
+      </form>
+    </section>
+  }
+
+  @if (isLoading()) {
+    <div class="rules-state" role="status">Loading alert rules…</div>
+  } @else if (rules().length === 0 && !isEditorOpen()) {
+    <div class="rules-state">No alert rules have been created.</div>
+  } @else {
+    <section class="rule-list" aria-label="Saved alert rules">
+      @for (rule of rules(); track rule.id) {
+        <article class="rule-row" [class.pending]="rule.id.startsWith('pending-')">
+          <div class="rule-main">
+            <h2>{{ rule.name }}</h2>
+            <ul>
+              @for (condition of rule.conditions; track $index) {
+                <li>
+                  {{ condition.metric }} {{ condition.operator }} {{ condition.threshold }} for
+                  {{ condition.durationSeconds }}s
+                </li>
+              }
+            </ul>
+          </div>
+          <div class="rule-actions">
+            @if (rule.id.startsWith('pending-')) {
+              <span role="status">Saving…</span>
+            } @else {
+              <button
+                mat-icon-button
+                type="button"
+                [attr.aria-label]="'Edit ' + rule.name"
+                (click)="editRule(rule)"
+              >
+                <mat-icon>edit</mat-icon>
+              </button>
+              <button
+                mat-icon-button
+                type="button"
+                [attr.aria-label]="'Delete ' + rule.name"
+                (click)="deleteRule(rule)"
+              >
+                <mat-icon>delete_outline</mat-icon>
+              </button>
+            }
+          </div>
+        </article>
+      }
+    </section>
+  }
+</main>

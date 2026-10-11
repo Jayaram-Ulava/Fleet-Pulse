@@ -1,0 +1,81 @@
+<main class="settings-page" aria-labelledby="page-title">
+  <header class="page-heading">
+    <div>
+      <p class="eyebrow">PREFERENCES <span>/</span> DISPLAY</p>
+      <h1 id="page-title">Settings</h1>
+      <p class="subtitle">Choose how fleet information is displayed in this browser.</p>
+    </div>
+  </header>
+
+  <form #settingsForm="ngForm" (ngSubmit)="save(settingsForm)" class="settings-form" novalidate>
+    <fieldset>
+      <legend>Dashboard display</legend>
+
+      <label class="setting-row" for="refresh-interval">
+        <span>
+          <strong>Snapshot refresh preference</strong>
+          <small>Used when the dashboard is in polling mode.</small>
+        </span>
+        <select
+          id="refresh-interval"
+          name="refreshIntervalSeconds"
+          [(ngModel)]="settings.refreshIntervalSeconds"
+          required
+          #refreshInterval="ngModel"
+        >
+          <option [ngValue]="2">2 seconds</option>
+          <option [ngValue]="5">5 seconds</option>
+          <option [ngValue]="10">10 seconds</option>
+        </select>
+        @if (refreshInterval.invalid && refreshInterval.touched) {
+          <span class="field-error">Choose a refresh interval.</span>
+        }
+      </label>
+
+      <label class="setting-row" for="compact-rows">
+        <span>
+          <strong>Compact service rows</strong>
+          <small>Reduce vertical spacing in the fleet table.</small>
+        </span>
+        <input
+          id="compact-rows"
+          type="checkbox"
+          name="compactRows"
+          [(ngModel)]="settings.compactRows"
+        />
+      </label>
+
+      <label class="setting-row" for="show-incidents">
+        <span>
+          <strong>Show incident notifications</strong>
+          <small>Keep new incident announcements visible in the toolbar.</small>
+        </span>
+        <input
+          id="show-incidents"
+          type="checkbox"
+          name="showIncidentPanel"
+          [(ngModel)]="settings.showIncidentPanel"
+        />
+      </label>
+    </fieldset>
+
+    <footer class="form-actions">
+      <button mat-button type="button" (click)="reset(settingsForm)">
+        <mat-icon aria-hidden="true">restart_alt</mat-icon>
+        <span>Reset</span>
+      </button>
+      <button
+        mat-flat-button
+        color="primary"
+        type="submit"
+        [disabled]="settingsForm.invalid || !settingsForm.dirty"
+      >
+        <mat-icon aria-hidden="true">save</mat-icon>
+        <span>Save preferences</span>
+      </button>
+    </footer>
+    @if (savedMessage(); as message) {
+      <p class="save-message" role="status">{{ message }}</p>
+    }
+  </form>
+</main>

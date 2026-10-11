@@ -1,0 +1,171 @@
+@if (loadError(); as message) {
+  <div class="error-banner" role="alert">
+    <mat-icon aria-hidden="true">error_outline</mat-icon>
+    <span>{{ message }}</span>
+    <button type="button" (click)="retry.emit()">Retry</button>
+  </div>
+}
+
+<div class="table-toolbar">
+  <label class="search-field">
+    <mat-icon aria-hidden="true">search</mat-icon>
+    <span class="visually-hidden">Search services</span>
+    <input
+      type="search"
+      [formControl]="searchControl()"
+      placeholder="Search services or teams"
+      autocomplete="off"
+    />
+  </label>
+  <label class="status-filter">
+    <span>Status</span>
+    <select [value]="statusFilter()" (change)="setStatusFilterFromEvent($event)">
+      <option value="all">All statuses</option>
+      <option value="healthy">Healthy</option>
+      <option value="degraded">Degraded</option>
+      <option value="down">Down</option>
+    </select>
+  </label>
+  <span class="result-count" aria-live="polite">{{ rows().length | number }} services</span>
+</div>
+
+<section class="table-section" aria-label="Services">
+  @if (isLoading() && !hasServices()) {
+    <div class="table-state" role="status">
+      <span class="loading-indicator" aria-hidden="true"></span>
+      <span>Loading fleet inventory…</span>
+    </div>
+  } @else if (!hasServices() && !loadError()) {
+    <div class="table-state" role="status">
+      <mat-icon aria-hidden="true">inventory_2</mat-icon>
+      <span>No services are available.</span>
+    </div>
+  } @else if (rows().length === 0 && !loadError()) {
+    <div class="table-state" role="status">
+      <mat-icon aria-hidden="true">search_off</mat-icon>
+      <span>No services match these filters.</span>
+    </div>
+  } @else {
+    <div class="table-surface" role="table" aria-label="Fleet service metrics">
+      <div class="table-header" role="row">
+        <div role="columnheader">
+          <button
+            type="button"
+            (click)="sortChange.emit('serviceId')"
+            [attr.aria-label]="'Sort service ID. ' + sortLabel('serviceId')"
+          >
+            Service ID <span aria-hidden="true">↕</span>
+          </button>
+        </div>
+        <div role="columnheader">
+          <button
+            type="button"
+            (click)="sortChange.emit('name')"
+            [attr.aria-label]="'Sort service name. ' + sortLabel('name')"
+          >
+            Service name <span aria-hidden="true">↕</span>
+          </button>
+        </div>
+        <div role="columnheader">
+          <button
+            type="button"
+            (click)="sortChange.emit('team')"
+            [attr.aria-label]="'Sort team. ' + sortLabel('team')"
+          >
+            Team <span aria-hidden="true">↕</span>
+          </button>
+        </div>
+        <div role="columnheader">
+          <button
+            type="button"
+            (click)="sortChange.emit('status')"
+            [attr.aria-label]="'Sort status. ' + sortLabel('status')"
+          >
+            Status <span aria-hidden="true">↕</span>
+          </button>
+        </div>
+        <div role="columnheader">
+          <button
+            type="button"
+            (click)="sortChange.emit('p95')"
+            [attr.aria-label]="'Sort p95 latency. ' + sortLabel('p95')"
+          >
+            p95 latency <span aria-hidden="true">↕</span>
+          </button>
+        </div>
+        <div role="columnheader">
+          <button
+            type="button"
+            (click)="sortChange.emit('errRate')"
+            [attr.aria-label]="'Sort error rate. ' + sortLabel('errRate')"
+          >
+            Error rate <span aria-hidden="true">↕</span>
+          </button>
+        </div>
+        <div role="columnheader">
+          <button
+            type="button"
+            (click)="sortChange.emit('rps')"
+            [attr.aria-label]="'Sort requests per second. ' + sortLabel('rps')"
+          >
+            Requests/s <span aria-hidden="true">↕</span>
+          </button>
+        </div>
+      </div>
+
+      <cdk-virtual-scroll-viewport
+        class="table-viewport"
+        role="rowgroup"
+        [itemSize]="compactRows() ? 39 : 49"
+        [minBufferPx]="196"
+        [maxBufferPx]="392"
+      >
+        <div
+          *cdkVirtualFor="let service of rows(); trackBy: trackService"
+          class="service-row"
+          [class.compact]="compactRows()"
+          [class.stale-data]="isDataStale()"
+          role="row"
+        >
+          <span class="service-id" role="cell">{{ service.serviceId }}</span>
+          <span class="service-name" role="cell"
+            ><a [routerLink]="['/services', service.serviceId]">{{ service.name }}</a></span
+          >
+          <span class="team-name" role="cell">{{ service.team }}</span>
+          <span role="cell"
+            ><span [class]="'status-label ' + service.status">{{ service.status }}</span></span
+          >
+          <span class="metric-value" role="cell"
+            >{{ service.p95 | number: '1.0-0' }} <small>ms</small></span
+          >
+          <span class="metric-value" role="cell"
+            >{{ service.errRate | number: '1.2-2' }}<small>%</small></span
+          >
+          <span class="metric-value" role="cell">{{ service.rps | number: '1.0-0' }}</span>
+        </div>
+      </cdk-virtual-scroll-viewport>
+    </div>
+  }
+</section>
+
+<details class="diagnostics">
+  <summary>Stream diagnostics</summary>
+  <dl>
+    <div>
+      <dt>Duplicates</dt>
+      <dd>{{ diagnostics().duplicates }}</dd>
+    </div>
+    <div>
+      <dt>Gaps</dt>
+      <dd>{{ diagnostics().gaps }}</dd>
+    </div>
+    <div>
+      <dt>Replay requests</dt>
+      <dd>{{ diagnostics().replayRequests }}</dd>
+    </div>
+    <div>
+      <dt>Malformed events</dt>
+      <dd>{{ diagnostics().malformed }}</dd>
+    </div>
+  </dl>
+</details>

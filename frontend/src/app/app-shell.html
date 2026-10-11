@@ -19,10 +19,22 @@
       <mat-icon aria-hidden="true">space_dashboard</mat-icon>
       <span>Fleet overview</span>
     </a>
+    @if (user()?.role === 'operator') {
+      <a mat-button class="nav-link" routerLink="/rules" routerLinkActive="is-active">
+        <mat-icon aria-hidden="true">rule</mat-icon>
+        <span>Alert rules</span>
+      </a>
+    }
+    @if (user()) {
+      <a mat-button class="nav-link" routerLink="/settings" routerLinkActive="is-active">
+        <mat-icon aria-hidden="true">settings</mat-icon>
+        <span>Settings</span>
+      </a>
+    }
 
     <div class="sidebar-note">
       <span class="note-indicator" aria-hidden="true"></span>
-      <span>Foundation phase</span>
+      <span>Operations workspace</span>
     </div>
   </aside>
 
@@ -33,11 +45,82 @@
       </div>
       <span class="toolbar-spacer"></span>
       <div class="connection-state" role="status" aria-live="polite">
-        <span class="connection-dot" aria-hidden="true"></span>
-        <span>Health check not connected</span>
+        <span [class]="'connection-dot ' + connectionStatus()" aria-hidden="true"></span>
+        <span>{{ connectionLabel() }}</span>
+        @if (retryDelayMs(); as delayMs) {
+          <small>Next retry {{ delayMs / 1000 | number: '1.0-0' }}s</small>
+        }
+        @if (dataAgeSeconds() !== null && connectionStatus() === 'stale') {
+          <small>Last event {{ dataAgeSeconds() }}s ago</small>
+        }
       </div>
-      <span class="user-label">Local workspace</span>
+      @if (user(); as currentUser) {
+        @if (settings().showIncidentPanel) {
+          <button
+            mat-button
+            type="button"
+            class="incident-button"
+            [attr.aria-expanded]="isIncidentPanelOpen()"
+            [attr.aria-label]="incidents().length + ' active incidents'"
+            (click)="toggleIncidentPanel()"
+          >
+            <mat-icon aria-hidden="true">notifications_active</mat-icon>
+            <span>{{ incidents().length }}</span>
+          </button>
+        }
+        <span class="user-label">{{ currentUser.email }} · {{ currentUser.role }}</span>
+        <button mat-button type="button" class="sign-out-button" (click)="signOut()">
+          Sign out
+        </button>
+      } @else {
+        <a mat-button class="sign-in-link" routerLink="/login">Sign in</a>
+      }
     </mat-toolbar>
+
+    <span class="visually-hidden" role="status" aria-live="assertive">
+      @if (incidents().length > 0) {
+        {{ incidents()[0].ruleName }} fired for {{ incidents()[0].serviceId }}.
+      }
+    </span>
+
+    @if (isIncidentPanelOpen() && settings().showIncidentPanel) {
+      <aside class="incident-panel" aria-label="Active incidents">
+        <header>
+          <h2>Active incidents</h2>
+          <button
+            mat-icon-button
+            type="button"
+            aria-label="Close incidents"
+            (click)="toggleIncidentPanel()"
+          >
+            <mat-icon>close</mat-icon>
+          </button>
+        </header>
+        @if (incidents().length === 0) {
+          <p class="incident-empty">No active incidents.</p>
+        } @else {
+          @for (incident of incidents(); track incident.id) {
+            <article class="incident-item">
+              <div>
+                <strong>{{ incident.ruleName }}</strong>
+                <p>{{ incident.serviceId }} · {{ incident.metric }} {{ incident.value }}</p>
+                <time [attr.datetime]="incident.firedAt | date: 'yyyy-MM-ddTHH:mm:ssXXX'">
+                  {{ incident.firedAt | date: 'mediumTime' }}
+                </time>
+              </div>
+              <button
+                mat-icon-button
+                type="button"
+                [attr.aria-label]="'Dismiss ' + incident.ruleName"
+                (click)="dismissIncident(incident)"
+              >
+                <mat-icon>check</mat-icon>
+              </button>
+            </article>
+          }
+        }
+      </aside>
+    }
 
     <main class="page-content">
       <router-outlet />

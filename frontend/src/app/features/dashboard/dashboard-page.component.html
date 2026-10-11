@@ -1,21 +1,55 @@
 <section class="dashboard" aria-labelledby="page-title">
   <div class="page-heading">
     <div>
-      <p class="eyebrow">FLEET STATUS <span> / </span> INITIALIZING</p>
+      <p class="eyebrow">FLEET STATUS <span>/</span> CURRENT SNAPSHOT</p>
       <h1 id="page-title">Fleet overview</h1>
-      <p class="subtitle">Service health and live operating metrics will appear here.</p>
+      <p class="subtitle">Service health and operating metrics across the fleet.</p>
     </div>
-    <span class="phase-label">Foundation phase</span>
+    <button class="refresh-button" type="button" (click)="loadFleet()" [disabled]="isLoading()">
+      <mat-icon aria-hidden="true">refresh</mat-icon>
+      <span>Refresh snapshot</span>
+    </button>
   </div>
 
-  <section class="empty-state" aria-labelledby="empty-title">
-    <div class="empty-icon" aria-hidden="true"><mat-icon>monitor_heart</mat-icon></div>
-    <div>
-      <h2 id="empty-title">No fleet data loaded</h2>
-      <p>
-        The application shell is ready. Service inventory and live metrics are the next
-        implementation phase.
-      </p>
+  <div class="summary-strip" aria-label="Fleet status summary">
+    <div class="summary-item">
+      <span class="summary-label">SERVICES</span>
+      <strong>{{ services().length | number }}</strong>
     </div>
-  </section>
+    <div class="summary-item">
+      <span class="summary-label">HEALTHY</span>
+      <strong class="healthy-text">{{ healthyCount() | number }}</strong>
+    </div>
+    <div class="summary-item">
+      <span class="summary-label">DEGRADED</span>
+      <strong class="degraded-text">{{ degradedCount() | number }}</strong>
+    </div>
+    <div class="summary-item">
+      <span class="summary-label">DOWN</span>
+      <strong class="down-text">{{ downCount() | number }}</strong>
+    </div>
+  </div>
+
+  @if (isDataStale()) {
+    <p class="stale-notice" role="status">
+      Metrics are stale. The last values remain visible while the stream reconnects.
+    </p>
+  }
+
+  <app-service-table
+    [rows]="rows()"
+    [searchControl]="searchControl"
+    [statusFilter]="statusFilter()"
+    [sortField]="sortField()"
+    [sortDirection]="sortDirection()"
+    [isLoading]="isLoading()"
+    [hasServices]="services().length > 0"
+    [loadError]="loadError()"
+    [diagnostics]="diagnostics()"
+    [compactRows]="settings().compactRows"
+    [isDataStale]="isDataStale()"
+    (statusFilterChange)="setStatusFilter($event)"
+    (sortChange)="sortBy($event)"
+    (retry)="loadFleet()"
+  />
 </section>
