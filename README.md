@@ -1,61 +1,19 @@
-# FleetPulse
-
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.2.26.
-
-## Development server
-
-To start a local development server, run:
-
-```bash
-ng serve
-```
-
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
-
-## Code scaffolding
-
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
-
-```bash
-ng generate component component-name
-```
-
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
-
-```bash
-ng generate --help
-```
-
-## Building
-
-To build the project run:
-
-```bash
-ng build
-```
-
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
-
 # Fleet Pulse
 
-Fleet Pulse is an operations dashboard assignment implemented as an Angular 21.2 and Express npm-workspace repository. The implementation is being delivered in verified phases; this foundation currently provides the Angular shell, development tooling, and a health-only mock API. Fleet data, authentication, streams, rules, and incidents are not implemented yet.
+Fleet Pulse is an Angular 21.2 and Express operations dashboard in a single npm-workspace repository. Implemented slices include authentication, a 2,000-service fleet snapshot, virtualized search/filter/sort, resilient live transports and replay, lazy service detail charts, operator alert-rule CRUD/evaluation, an incident panel, and template-driven settings.
 
 ## Requirements
 
-- Node.js 22.12 or newer and npm 10.9.2 or newer
-- Docker with the Compose plugin (optional)
+- Node.js 22.12+ and npm 10.9.2+
+- Docker with the Compose plugin for container startup (optional)
 
-Angular 21.2, TypeScript strict mode, Angular Material, Sass, RxJS, Vitest, ESLint/angular-eslint, Express 5, and `ws` are configured in the workspaces.
+The frontend uses strict TypeScript, Angular Material, Sass, RxJS, Vitest, and Chart.js (loaded only by the lazy detail route). ESLint with angular-eslint is configured for Angular; the backend uses Express 5, `ws`, and Node's built-in test runner.
 
 ## Run locally
 
 ```bash
 npm ci
-npm run start --workspace @fleet-pulse/backend
+npm run dev --workspace @fleet-pulse/backend
 ```
 
 In a second terminal:
@@ -64,7 +22,18 @@ In a second terminal:
 npm start
 ```
 
-Open `http://localhost:4200`. The Angular dev-server proxies `/api/*` to the backend on port 3000 and proxies `/stream` with WebSocket support. The only backend endpoint available in this phase is `GET /health` at `http://localhost:3000/health`.
+Open `http://localhost:4200`. The Angular dev server proxies `/api/*` to port 3000 and forwards WebSocket upgrades at `/stream`. The backend listens on port 3000.
+
+### Demo accounts
+
+- Operator: `operator@pulse.dev` / `pulse123`
+- Viewer: `viewer@pulse.dev` / `pulse123`
+
+`POST /auth/login` accepts `{ "email": "...", "password": "..." }` and returns `{ "accessToken": "...", "user": { "id": "...", "email": "...", "role": "operator|viewer" } }`. The access token is held only in Angular memory. The backend sets a rotating HttpOnly refresh cookie; `POST /auth/refresh` renews the in-memory access token. Logout clears the cookie and revokes the user's mock tokens. These response fields are implementation assumptions because the assignment PDF was not included in the workspace; confirm them against the source PDF before claiming exact contract parity.
+
+Current data endpoints include `GET /services`, `GET /metrics/snapshot`, `GET /metrics/history?serviceId=svc-0001&minutes=15`, and `GET /metrics/replay?since=0`. All require an access token. The history endpoint returns generated sample history, not persisted production telemetry.
+
+Rules endpoints include `GET /rules`, `GET /rules/:id`, `POST /rules`, `PUT /rules/:id`, `DELETE /rules/:id`, and `GET /rules/check-name?name=...&excludeId=...`. Mutations require the operator role; creates require a UUID `Idempotency-Key`. The current incident panel is client-side and does not have a separate persistence API.
 
 ## Commands
 
@@ -75,7 +44,7 @@ npm run lint
 npm run format:check
 ```
 
-To run Angular's lint target directly, run `npx ng lint` from `frontend/`. The backend uses Node's built-in test runner. `npm test` runs the test command in each workspace.
+`npm test` runs Angular/Vitest and backend/Node tests. To run Angular's lint target directly, run `npx ng lint` from `frontend/`.
 
 ## Docker Compose
 
@@ -83,31 +52,39 @@ To run Angular's lint target directly, run `npx ng lint` from `frontend/`. The b
 docker compose up --build
 ```
 
-The frontend is available at `http://localhost:4200`; the backend health endpoint is at `http://localhost:3000/health`. Compose waits for the backend health check before starting the frontend container.
+The frontend is exposed at `http://localhost:4200`; the backend health endpoint is `http://localhost:3000/health`. Compose waits for the backend health check before starting the frontend. Docker was unavailable in the development environment, so Compose has not yet been executed here.
 
 ## Architecture
 
-- `frontend/` contains the standalone Angular app. Route-level pages are lazy loaded under `src/app/features`; shared authentication, HTTP, stream, connection, model, and utility code will live under `src/app/core` and `src/app/shared` as those phases are implemented.
-- `backend/` contains the Express mock API. API behavior will be added behind explicit modules and covered with Node tests.
-- Root npm workspaces share one lockfile so `npm ci` installs a reproducible dependency graph.
-- `frontend/src/environments/environment.ts` centralizes API and stream base paths. The local proxy and Compose nginx config route browser traffic to the backend without embedding container hostnames in Angular.
+- `frontend/src/app/core/` owns authentication, route guards, typed API access, transport state, stream integrity, and diagnostics; `features/` owns lazy route-level pages.
+- `frontend/src/app/features/dashboard/` separates dashboard/query state from the CDK virtualized service table.
+- `frontend/src/app/features/services/` owns the detail route, chart components, and bounded series downsampling.
+- `frontend/src/app/features/rules/` owns the FormArray editor and client-side rule workflow; `core/connection/rule-evaluation.service.ts` is the shared duration-aware evaluator.
+- `frontend/src/app/core/settings/` owns browser-safe preferences consumed by polling, row density, and incident visibility.
+- `backend/src/` owns Express setup, mock auth, generated fleet data, replay history, SSE, and WebSocket upgrades.
+- Root npm workspaces share `package-lock.json` for reproducible installs.
+- `frontend/src/environments/environment.ts` defines the API and stream base paths. The dev proxy and nginx config keep backend hostnames out of Angular code.
 
-The planned stream pipeline is:
+Stream pipeline:
 
 ```text
-WebSocket -> SSE -> polling
-	|         |        |
-	+---- transport manager ----> event validation/order/replay ----> signals and feature state
+WebSocket -> SSE -> 2-second polling
+	|        |          |
+	+---- transport manager ----> event validation/order/replay -> signals -> dashboard/charts
 ```
 
-The detailed fallback, replay, retry, and refresh policies will be documented alongside their implementation and tests.
+The manager falls back after three consecutive failures or a five-second connection timeout. Retry delay is exponential with 0.8-1.2 jitter, capped at 30 seconds; lower-priority transports probe higher-priority transports every 30 seconds. Five-second heartbeats are sent, and the clients fail over after two missed intervals. Browser offline pauses reconnects. Connection health uses the timestamp of the last valid metric and labels displayed data stale after 10 seconds without an event.
 
-## Performance and scope notes
+Events are validated, deduplicated by global offset, and checked against per-service sequence numbers. An out-of-order gap is buffered for one second; if it remains, the client requests replay from its last applied offset. Replay HTTP 410 replaces state with a fresh snapshot. The client batches signal publication in a microtask, bounds pending events at 5,000, and keeps 300 recent points per service for charts. Replay history on the backend is bounded to 10,000 events. These choices bound memory and avoid duplicate application; delayed gaps add up to one second before replay starts.
 
-The initial Angular production build for the shell reported an estimated 95.18 kB transferred for initial browser chunks. This is build output, not a Chrome DevTools measurement; frame rate, long tasks, memory growth, interaction latency, and the 2,000-event/sec target have not been measured. Record Chrome Performance and Memory panel results with browser/version, fixture size, event rate, and capture duration before claiming those targets.
+Every HTTP request has a 10-second timeout. Safe GET requests retry network failures, 429, 502, 503, and 504, with at most three total attempts. `Retry-After` is honored for 429. POST retries are limited to requests carrying a UUID `Idempotency-Key`; rule creation uses that mechanism.
 
-The assignment PDF was not present in the supplied workspace when this phase began. The endpoint names in the request are known, but exact PDF-specific payloads and chaos behavior must be checked against the source document before claiming contract parity. No test accounts, chaos switches, or non-health API responses are active yet.
+Chart downsampling uses evenly sized chronological buckets and averages each metric within a bucket. This bounds each series to 300 points and is cheap to explain and compute, but can smooth short spikes.
 
-## AI tools
+## Verification and limitations
 
-GitHub Copilot was used as a coding assistant. Implementation and verification results are recorded per phase; generated code and tests remain subject to developer review.
+The current production build reports an estimated initial browser transfer of about 125 kB; Chart.js is a separate lazy chunk (about 61 kB estimated transfer), and rules are also lazy loaded. These are Angular build estimates, not Chrome DevTools measurements. Browser checks confirmed 2,000 inventory entries and 14 rendered rows in the virtual viewport. Frame rate, main-thread tasks, memory growth, interaction latency, and the 2,000-events/sec target have not been measured.
+
+The supplied workspace contained no assignment PDF. Endpoint names are taken from the request; payloads, status codes, cookie strategy, and chaos behavior must be compared with that PDF when available. Current mock event generation is fixed at 100 events/sec; chaos switches and load targets are not implemented. Incidents exist only in the browser session and are not persisted. The mock credentials and in-memory token store are for local development only, not production authentication.
+
+GitHub Copilot was used as a coding assistant. Code and tests remain subject to developer review.
